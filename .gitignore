@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+env/
+.venv/
+
+# Environment variables
+.env
+
+# Database files
+*.db
+*.sqlite3
+blog.db
+
+# IDE and Editor files
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
