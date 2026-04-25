@@ -25,7 +25,7 @@ class PitchResponse(PitchBase):
 
 class RecordBase(BaseModel):
     pitch_id: int
-    datetime_from_st: str = Field(min_length=8, max_length=10)
+    datetime_from_st: str = Field(min_length=11, max_length=17)
 
 
 class RecordCreate(RecordBase):
