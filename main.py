@@ -99,12 +99,12 @@ def create_record(record: RecordCreate, db: Annotated[Session, Depends(get_db)])
     return new_record
 
 
-@app.get("/api/records/{user_id}/{pitch_id}/{time_stamp}", response_model=RecordResponse)
+@app.get("/api/records/{user_id}/{pitch_id}", response_model=list[RecordResponse])
 def get_record(user_id: int,pitch_id:int ,time_stamp:str,db: Annotated[Session, Depends(get_db)]):
     result = db.execute(select(models.Record).where(models.Record.user_id == user_id,
                                                     models.Record.pitch_id == pitch_id,
-                                                    models.Record.date_posted.startswith(time_stamp)))
-    record = result.scalars().first()
+                                                    models.Record.datetime_from_st.startswith(time_stamp)))
+    record = result.scalars().all()
     
     if not record:
             raise HTTPException(
