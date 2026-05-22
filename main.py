@@ -11,11 +11,14 @@ from schemas import  PitchCreate, PitchResponse, RecordCreate, RecordResponse
 import models
 from database import get_db, Base, engine
 
+from datetime import datetime
+
 Base.metadata.create_all(bind=engine)
 
 from typing import Annotated
 
 app = FastAPI()
+
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -111,5 +114,12 @@ def get_record(user_id: int,pitch_id:int ,time_stamp:str,db: Annotated[Session, 
                 status_code=status.HTTP_404_NOT_FOUND, 
                 detail="Kayıt bulunamadı"
             )
+    
+    video_base_url = "http://127.0.0.1:8085/matches"
+    for r in record:
+        organized_record = datetime.strptime(r.datetime_from_st, "%d/%m/%y %H:%M:%S")
+        video_name = organized_record.strftime("%d%m%y_%H") + ".mp4" # Örn: 250426_12.mp4
+        
+        r.video_url = f"{video_base_url}/saha_{r.pitch_id}/{video_name}"
             
     return record

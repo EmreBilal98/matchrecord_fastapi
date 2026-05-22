@@ -42,3 +42,5 @@ class RecordResponse(RecordBase):
     user_id: int
     date_posted: datetime
     company: PitchResponse
+
+    video_url: str = None
