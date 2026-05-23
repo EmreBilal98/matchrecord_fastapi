@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from schemas import  PitchCreate, PitchResponse, RecordCreate, RecordResponse
+from schemas import  PitchCreate, PitchResponse, RecordCreate, RecordResponse,LoginRequest, TokenResponse
 
 import models
 from database import get_db, Base, engine
@@ -17,6 +17,13 @@ Base.metadata.create_all(bind=engine)
 
 from typing import Annotated
 
+from passlib.context import CryptContext  
+
+from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 app = FastAPI()
 
 
@@ -24,9 +31,22 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+def get_current_user_from_token(token: str = Depends(oauth2_scheme)):
+
+    if "secret_abc123" not in token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Geçersiz veya eksik Token! Giriş yapmalısınız.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return token
+
 @app.get("/")
 def home():
     return {"message": "Hello, World!"}
+
 
 @app.post(
     "/api/users",
@@ -56,15 +76,47 @@ def create_user(user: PitchCreate, db: Annotated[Session, Depends(get_db)]):
             detail="Pitch count must be a positive integer.",
         )
     
-    new_user = models.User(username=user.username, email=user.email, pitch_count=user.pitch_count)
+    hashed_pwd = pwd_context.hash(user.password)
+
+    new_user = models.User(username=user.username, email=user.email, pitch_count=user.pitch_count,hashed_password=hashed_pwd)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
     return new_user
 
+@app.post("/api/auth/login", response_model=TokenResponse)
+def login(login_data: LoginRequest, db: Annotated[Session, Depends(get_db)]):
+    # 1. Kullanıcıyı DB'de ara
+    result = db.execute(select(models.User).where(models.User.username == login_data.username))
+    user = result.scalars().first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Hatalı kullanıcı adı veya şifre."
+        )
+    
+    # 2. Passlib ile Şifre Doğrulama (Kritik Satır)
+    # verify() fonksiyonu: (gelen_düz_şifre, veritabanındaki_hashli_şifre) alır
+    is_password_correct = pwd_context.verify(login_data.password, user.hashed_password)
+    
+    if not is_password_correct:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Hatalı kullanıcı adı veya şifre."
+        )
+    
+    # 3. Giriş başarılı! Geçici bir token dönüyoruz
+    generated_token = f"token_user_id_{user.id}_secret_abc123"
+    
+    return {
+        "access_token": generated_token,
+        "token_type": "bearer"
+    }
+
 @app.get("/api/users/{user_id}",response_model=PitchResponse)
-def get_user(user_id:int,db: Annotated[Session, Depends(get_db)]):
+def get_user(user_id:int,db: Annotated[Session, Depends(get_db)],current_token: str = Depends(get_current_user_from_token)):
     result = db.execute(select(models.User).where(models.User.id == user_id))
     user = result.scalars().first()
     if user:

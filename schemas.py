@@ -12,7 +12,7 @@ class PitchBase(BaseModel):
 
 
 class PitchCreate(PitchBase):
-    pass
+    password: str = Field(min_length=8, max_length=100)
 
 
 class PitchResponse(PitchBase):
@@ -22,6 +22,13 @@ class PitchResponse(PitchBase):
     image_file: str | None
     image_path: str
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
 
 class RecordBase(BaseModel):
     pitch_id: int
