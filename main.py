@@ -21,6 +21,7 @@ from passlib.context import CryptContext
 
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -31,7 +32,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+#oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/swagger-login")
 
 def get_current_user_from_token(token: str = Depends(oauth2_scheme)):
 
@@ -115,6 +117,14 @@ def login(login_data: LoginRequest, db: Annotated[Session, Depends(get_db)]):
         "token_type": "bearer"
     }
 
+@app.post("/api/auth/swagger-login", include_in_schema=False) 
+def swagger_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(get_db)]):
+    # Formdan gelen veriyi alıp yukarıdaki JSON bekleyen fonksiyonuna pasla
+    from schemas import LoginRequest
+    json_data = LoginRequest(username=form_data.username, password=form_data.password)
+    return login(login_data=json_data, db=db)
+
+
 @app.get("/api/users/{user_id}",response_model=PitchResponse)
 def get_user(user_id:int,db: Annotated[Session, Depends(get_db)],current_token: str = Depends(get_current_user_from_token)):
     result = db.execute(select(models.User).where(models.User.id == user_id))
@@ -155,7 +165,7 @@ def create_record(record: RecordCreate, db: Annotated[Session, Depends(get_db)])
 
 
 @app.get("/api/records/{user_id}/{pitch_id}", response_model=list[RecordResponse])
-def get_record(user_id: int,pitch_id:int ,time_stamp:str,db: Annotated[Session, Depends(get_db)]):
+def get_record(user_id: int,pitch_id:int ,time_stamp:str,db: Annotated[Session, Depends(get_db)],current_token: str = Depends(get_current_user_from_token)):
     result = db.execute(select(models.Record).where(models.Record.user_id == user_id,
                                                     models.Record.pitch_id == pitch_id,
                                                     models.Record.datetime_from_st.startswith(time_stamp)))
