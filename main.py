@@ -182,6 +182,6 @@ def get_record(user_id: int,pitch_id:int ,time_stamp:str,db: Annotated[Session, 
         organized_record = datetime.strptime(r.datetime_from_st, "%d/%m/%y %H:%M:%S")
         video_name = organized_record.strftime("%d%m%y_%H") + ".mp4" # Örn: 250426_12.mp4
         
-        r.video_url = f"{video_base_url}/saha_{r.pitch_id}/{video_name}"
+        r.video_url = f"{video_base_url}/user_{r.user_id}/pitch_{r.pitch_id}/{video_name}"
             
     return record
