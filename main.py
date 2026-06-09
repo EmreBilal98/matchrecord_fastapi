@@ -152,11 +152,18 @@ def create_record(record: RecordCreate, db: Annotated[Session, Depends(get_db)])
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User has no pitches has this pitch_id",
         )
+    
+    if record.team_id < 0 and record.team_id > 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Team id must be between 0 and 2",
+        )
 
     new_record = models.Record(
         pitch_id=record.pitch_id,
         datetime_from_st=record.datetime_from_st,
         user_id=record.user_id,
+        team_id=record.team_id,
     )
     db.add(new_record)
     db.commit()

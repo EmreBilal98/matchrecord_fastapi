@@ -37,6 +37,7 @@ class Record(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     pitch_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    team_id: Mapped[int] = mapped_column(Integer, nullable=False)
     datetime_from_st: Mapped[str] = mapped_column(String(100), nullable=False)
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),

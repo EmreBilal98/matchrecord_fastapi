@@ -32,6 +32,7 @@ class TokenResponse(BaseModel):
 
 class RecordBase(BaseModel):
     pitch_id: int
+    team_id: int
     datetime_from_st: str = Field(min_length=11, max_length=17)
 
 
@@ -46,6 +47,7 @@ class RecordResponse(RecordBase):
     
     id: int
     pitch_id: int
+    team_id: int
     user_id: int
     date_posted: datetime
     company: PitchResponse
